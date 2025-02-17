@@ -30,7 +30,7 @@ def insert_study():
 
         # Save the file temporarily
         file_content = file.read()
-        print(file_content)
+        # print(file_content)
         # Process the file (Modify `get_file_data_for_study` to accept bytes)
         result = get_file_data_for_study(file_content)
         study = STUDIES_collection.insert_one(result)

@@ -274,13 +274,15 @@ def get_file_data_for_study(file_bytes):
                 }
 
                 for col in mindset_cols:
-                    option_data["Mindsets"].append({col: row[col]}) 
+                    option_data["Mindsets"].append({col: row[col] if str(row[col])!="nan" else None}) 
+                    print(row[col])
                 for col in gender_cols:
-                    option_data["Gender Segments"][col] = row[col]
+                    option_data["Gender Segments"][col] = row[col] if str(row[col])!="nan" else None
                 for col in age_cols:
-                    option_data["Age Segments"][col] = row[col]
+                    option_data["Age Segments"][col] = row[col] if str(row[col])!="nan" else None
                 for col in prelim_answer_cols:
-                    option_data["Prelim-Answer Segments"].append({col: row[col]}) 
+                    
+                    option_data["Prelim-Answer Segments"].append({col: row[col] if str(row[col])!="nan" else None}) 
 
                 current_question["options"].append(option_data)
 
@@ -302,7 +304,7 @@ def get_file_data_for_study(file_bytes):
             "Base Values": extract_base_values(df),
             "Data": process_sheet(df)
         }
-        print(output_data)
+        # print(output_data)
 
     return {"_id":str(uuid.uuid4()),
             "studyTitle":study_info['study_title'],
