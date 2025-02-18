@@ -242,51 +242,56 @@ def get_file_data_for_study(file_bytes):
         return study_info
 
     def process_sheet(df):
-        mindset_cols = [col for col in df.columns if "Mindset" in str(col)]
-        gender_cols = [col for col in df.columns if "Male" in str(col) or "Female" in str(col)]
-        age_cols = [col for col in df.columns if any(age in str(col) for age in ["13 - 17", "18 - 24", "25 - 34", "35 - 44", "45 - 54", "55 - 64", "65+"])]
-        total_col = "Total"
+        try:
+            mindset_cols = [col for col in df.columns if "Mindset" in str(col)]
+            gender_cols = [col for col in df.columns if "Male" in str(col) or "Female" in str(col)]
+            age_cols = [col for col in df.columns if any(age in str(col) for age in ["13 - 17", "18 - 24", "25 - 34", "35 - 44", "45 - 54", "55 - 64", "65+"])]
+            total_col = "Total"
 
-        prelim_answer_cols = [col for col in df.columns[3:] if col not in mindset_cols + gender_cols + age_cols + [total_col] and "Unnamed" not in str(col)]
-        base_size = df.iloc[0, 2]
+            prelim_answer_cols = [col for col in df.columns[3:] if col not in mindset_cols + gender_cols + age_cols + [total_col] and "Unnamed" not in str(col)]
+            
+            print("in parsesheet base  size  ")
+            base_size = df.iloc[0, 2]
+            print("completed parsesheet base  size  ")
 
-        output_json = {
-            "Base Size": base_size,
-            "Questions": []
-        }
+            output_json = {
+                "Base Size": base_size,
+                "Questions": []
+            }
 
-        current_question = None
-        for index, row in df.iterrows():
-            if isinstance(row[1], str) and row[1].startswith("Question"):
-                current_question = {
-                    "Question": row[1].split(": ", 1)[1] if ": " in row[1] else row[1],
-                    "options": []
-                }
-                output_json["Questions"].append(current_question)
-            elif isinstance(row[0], str) and current_question:
-                option_data = {
-                    "optiontext": row[1],
-                    "Total": row[total_col] if total_col in df.columns else None,
-                    "Mindsets": [],
-                    "Gender Segments": {},
-                    "Age Segments": {},
-                    "Prelim-Answer Segments": []
-                }
+            current_question = None
+            for index, row in df.iterrows():
+                if isinstance(row[1], str) and row[1].startswith("Question"):
+                    current_question = {
+                        "Question": row[1].split(": ", 1)[1] if ": " in row[1] else row[1],
+                        "options": []
+                    }
+                    output_json["Questions"].append(current_question)
+                elif isinstance(row[0], str) and current_question:
+                    option_data = {
+                        "optiontext": row[1],
+                        "Total": row[total_col] if total_col in df.columns else None,
+                        "Mindsets": [],
+                        "Gender Segments": {},
+                        "Age Segments": {},
+                        "Prelim-Answer Segments": []
+                    }
 
-                for col in mindset_cols:
-                    option_data["Mindsets"].append({col: row[col] if str(row[col])!="nan" else None}) 
-                    print(row[col])
-                for col in gender_cols:
-                    option_data["Gender Segments"][col] = row[col] if str(row[col])!="nan" else None
-                for col in age_cols:
-                    option_data["Age Segments"][col] = row[col] if str(row[col])!="nan" else None
-                for col in prelim_answer_cols:
-                    
-                    option_data["Prelim-Answer Segments"].append({col: row[col] if str(row[col])!="nan" else None}) 
+                    for col in mindset_cols:
+                        option_data["Mindsets"].append({col: row[col] if str(row[col])!="nan" else None}) 
+                    for col in gender_cols:
+                        option_data["Gender Segments"][col] = row[col] if str(row[col])!="nan" else None
+                    for col in age_cols:
+                        option_data["Age Segments"][col] = row[col] if str(row[col])!="nan" else None
+                    for col in prelim_answer_cols:
+                        
+                        option_data["Prelim-Answer Segments"].append({col: row[col] if str(row[col])!="nan" else None}) 
 
-                current_question["options"].append(option_data)
+                    current_question["options"].append(option_data)
 
-        return output_json
+            return output_json
+        except:
+            return {}
 
     print(xls.sheet_names)
     study_info = process_sheet_for_info(xls.parse(sheet_name="Information Block", header=None).dropna(how="all"))
@@ -296,14 +301,30 @@ def get_file_data_for_study(file_bytes):
         base_values = {}
         for col in df.columns[3:]:
             base_values[col] = df.iloc[0][col] if not pd.isna(df.iloc[0][col]) else None
+        print("base values got succedssfull ")
+        print("base values got succedssfull ")
+        print("base values got succedssfull ")
+        print("base values got succedssfull ")
+        print("base values got succedssfull ")
+        print("base values got succedssfull ")
+        print("base values got succedssfull ")
+        print("base values got succedssfull ")
+        print("base values got succedssfull ")
         return base_values
     output_data = {}
     for sheet in xls.sheet_names[5:]:
-        df = xls.parse(sheet)
-        output_data[sheet] = {
-            "Base Values": extract_base_values(df),
-            "Data": process_sheet(df)
-        }
+        try:
+            df = xls.parse(sheet)
+            output_data[sheet] = {
+                "Base Values": extract_base_values(df),
+                "Data": process_sheet(df)
+            }
+        except Exception as error :
+            # print(error)
+            output_data[sheet]={
+                "error": error
+            }
+            
         # print(output_data)
 
     return {"_id":str(uuid.uuid4()),
