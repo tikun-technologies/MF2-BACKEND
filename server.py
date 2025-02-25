@@ -19,6 +19,9 @@ CORS(app, resources={r"/*": {"origins": ["http://localhost:3000","*"],
 
 
 # Register Blueprints
+@app.route("/", methods=['GET'])
+def home():
+    return jsonify({"status": "success", "message": "Flask API is running!"})
 
 from Routes.StudyRoute import studyBp
 from Routes.UserRoute import userBp
