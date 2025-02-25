@@ -1,11 +1,17 @@
 from flask import Flask, jsonify
-from Routes.StudyRoute import studyBp
-from Routes.UserRoute import userBp
 from flask_cors import CORS
-
+from flask_jwt_extended import JWTManager
+from authlib.integrations.flask_client import OAuth
+from DB.extension import jwt, oauth
 app = Flask(__name__)
-
 app.secret_key = 'Dheeraj@2006'
+
+
+app.config['JWT_SECRET_KEY'] = 'Dheeraj@2006'  # Change this to a secure key
+
+# ✅ Initialize JWT and OAuth with the app
+jwt.init_app(app)
+oauth.init_app(app)
 
 CORS(app, resources={r"/*": {"origins": ["http://localhost:3000","*"],
                              "methods": ["GET", "POST", "OPTIONS"],
@@ -13,6 +19,9 @@ CORS(app, resources={r"/*": {"origins": ["http://localhost:3000","*"],
 
 
 # Register Blueprints
+
+from Routes.StudyRoute import studyBp
+from Routes.UserRoute import userBp
 app.register_blueprint(studyBp)  
 app.register_blueprint(userBp)  
 

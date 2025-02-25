@@ -207,6 +207,20 @@ import json
 import uuid
 import pandas as pd
 from io import BytesIO
+from functools import wraps
+from flask_jwt_extended import  jwt_required
+
+
+
+
+def protected(f):
+    @wraps(f)
+    @jwt_required()
+    def wrapper(*args, **kwargs):
+        return f(*args, **kwargs)
+    return wrapper
+
+
 
 def get_file_data_for_study(file_bytes):
     # Load the Excel file from memory
