@@ -217,6 +217,9 @@ def reset_password():
 @studyuserBp.route("/mf2/user/studies", methods=['GET'])
 @jwt_required()
 def get_user_studies():
-    current_user = get_jwt_identity()
-    studies = list(STUDIES_collection.find({"studyCreatedBy.email": current_user}, {"_id": 0}))
-    return jsonify({'status': 'success', 'studies': studies})
+    try:
+        current_user = get_jwt_identity()
+        studies = list(STUDIES_collection.find({"studyCreatedBy.user.email": current_user}, {"_id": 0}))
+        return jsonify({'status': 'success', 'studies': studies})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
