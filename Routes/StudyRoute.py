@@ -2,23 +2,24 @@ import os
 # from turtle import pd
 import uuid
 from flask import Blueprint, request
-from DB.db import STUDIES_collection,USER_collection
+from DB.db import STUDIES_collection,STUDY_USER_collection
 from flask import jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from functions import get_file_data_for_study, protected
+from functions import get_file_data_for_study
 
 studyBp = Blueprint('studyBp', __name__)
 
-@studyBp.route("/studies",methods=['GET', 'POST', 'OPTIONS'])
+@studyBp.route("/mf2/studies",methods=['GET', 'POST', 'OPTIONS'])
+@jwt_required()
 def study_list():
     all_studies=[i for i in STUDIES_collection.find({})]
     return jsonify({"studies":all_studies})
 
 
 
-@studyBp.route("/add/study", methods=["GET","POST"])
-@protected
+@studyBp.route("/mf2/add/study", methods=["GET","POST"])
+@jwt_required()
 def insert_study():
     try:
         current_user = get_jwt_identity()  # ✅ Get user's email from JWT
@@ -53,8 +54,8 @@ def insert_study():
         return jsonify({"status": "error", "message": str(e)}), 400
     
     
-@studyBp.route("/study/<study_id>", methods=['GET'])
-@protected
+@studyBp.route("/mf2/study/<study_id>", methods=['GET'])
+@jwt_required()
 def get_study_by_id(study_id):
     study = STUDIES_collection.find_one({"_id": study_id})
     if not study:
@@ -62,8 +63,8 @@ def get_study_by_id(study_id):
     return jsonify({'status': 'success', 'study': study})
 
 # Delete Study
-@studyBp.route("/study/<study_id>", methods=['DELETE'])
-@protected
+@studyBp.route("/mf2/study/<study_id>", methods=['DELETE'])
+@jwt_required()
 def delete_study(study_id):
     result = STUDIES_collection.delete_one({"_id": study_id})
     if result.deleted_count == 0:

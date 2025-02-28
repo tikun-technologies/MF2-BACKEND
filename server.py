@@ -24,14 +24,11 @@ def home():
     return jsonify({"status": "success", "message": "Flask API is running!"})
 
 from Routes.StudyRoute import studyBp
-from Routes.UserRoute import userBp
+from Routes.UserRoute import studyuserBp
 app.register_blueprint(studyBp)  
-app.register_blueprint(userBp)  
+app.register_blueprint(studyuserBp)  
 
 
-@app.route("/")
-def index():
-    return jsonify("this if dnogdn")
 
 if __name__ == "__main__":
     # print("Server is running on http://127.0.0.1:5000")  # Debugging
