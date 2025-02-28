@@ -5,19 +5,12 @@ from flask import Blueprint, request, jsonify
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token, decode_token, jwt_required, get_jwt_identity
 from DB.db import STUDY_USER_collection, STUDIES_collection
-from DB.extension import jwt,oauth
-
-
-
-
-from flask_mail import Mail, Message
-
-# Configure Flask-Mail
-mail = Mail()
+from extension import jwt,oauth,mail
+from flask_mail import Message
 def send_reset_email(email, token):
     reset_url = f"https://tikunstudies.netlify.app/reset-password?token={token}"
     msg = Message("Password Reset Request",
-                  sender="noreply@yourapp.com",
+                  sender="studies@tikuntech.com",
                   recipients=[email])
     msg.body = f"""To reset your password, click the following link:
 {reset_url}
@@ -91,14 +84,16 @@ def login():
             return jsonify({'status': 'error', 'message': 'Invalid credentials'}), 401
         
         access_token = create_access_token(identity=email, expires_delta=datetime.timedelta(days=30))
-        return jsonify({'status': 'success', 'access_token': access_token})
+        return jsonify({'status': 'success', 'access_token': str(access_token)})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
 
 # Google OAuth Login
 @studyuserBp.route("/mf2/login/google")
 def google_login():
+    print(request.host_url)
     redirect_uri = request.host_url + "mf2/callback/google"
+    print(redirect_uri)
     return oauth.google.authorize_redirect(redirect_uri)
 
 # Google OAuth Callback
