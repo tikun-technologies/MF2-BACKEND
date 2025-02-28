@@ -43,7 +43,7 @@ def insert_study():
 
         # ✅ Add the authenticated user's email to `studyCreatedBy`
         result["studyCreatedBy"] = {"user":STUDY_USER_collection.find_one({"email": current_user},{"password": 0})}
-
+        print(result)
         # Insert the study into the database
         study = STUDIES_collection.insert_one(result)
 

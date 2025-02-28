@@ -219,7 +219,7 @@ def reset_password():
 def get_user_studies():
     try:
         current_user = get_jwt_identity()
-        studies = list(STUDIES_collection.find({"studyCreatedBy.user.email": current_user}, {"_id": 1}))
+        studies = list(STUDIES_collection.find({"studyCreatedBy.user.email": current_user}))
         return jsonify({'status': 'success', 'studies': studies})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
