@@ -89,12 +89,11 @@ def login():
         return jsonify({'status': 'error', 'message': str(e)}), 400
 
 # Google OAuth Login
-@studyuserBp.route("/mf2/login/google")
+@studyuserBp.route("/mf2/login/google", methods=["GET"])
 def google_login():
-    print(request.host_url)
     redirect_uri = "https://studiesapi.tikuntech.com/mf2/callback/google"
-    print(redirect_uri)
-    return oauth.google.authorize_redirect(redirect_uri)
+    auth_url = oauth.google.authorize_redirect(redirect_uri).location  # ✅ Get the redirect URL
+    return jsonify({"auth_url": auth_url}) 
 
 # Google OAuth Callback
 @studyuserBp.route("/mf2/callback/google")
