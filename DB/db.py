@@ -5,3 +5,4 @@ client = MongoClient(uri,tlsCAFile=certifi.where())
 db = client['MF2']
 STUDY_USER_collection = db['USERS']
 STUDIES_collection = db['STUDIES']
+ARTICLE_collection = db['ARTICLE']

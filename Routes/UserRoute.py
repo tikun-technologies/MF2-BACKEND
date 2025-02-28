@@ -89,11 +89,12 @@ def login():
         return jsonify({'status': 'error', 'message': str(e)}), 400
 
 # Google OAuth Login
-@studyuserBp.route("/mf2/login/google", methods=["GET"])
+@studyuserBp.route("/mf2/login/google")
 def google_login():
+    print(request.host_url)
     redirect_uri = "https://studiesapi.tikuntech.com/mf2/callback/google"
-    auth_url = oauth.google.authorize_redirect(redirect_uri).location  # ✅ Get the redirect URL
-    return jsonify({"auth_url": auth_url}) 
+    print(redirect_uri)
+    return oauth.google.authorize_redirect(redirect_uri)
 
 # Google OAuth Callback
 @studyuserBp.route("/mf2/callback/google")
@@ -218,7 +219,7 @@ def reset_password():
 def get_user_studies():
     try:
         current_user = get_jwt_identity()
-        studies = list(STUDIES_collection.find({"studyCreatedBy.user.email": current_user}, {"_id": 0}))
+        studies = list(STUDIES_collection.find({"studyCreatedBy.user.email": current_user}, {"_id": 1}))
         return jsonify({'status': 'success', 'studies': studies})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
