@@ -92,7 +92,7 @@ def login():
 @studyuserBp.route("/mf2/login/google")
 def google_login():
     print(request.host_url)
-    redirect_uri = request.host_url + "mf2/callback/google"
+    redirect_uri = "https://studiesapi.tikuntech.com/mf2/callback/google"
     print(redirect_uri)
     return oauth.google.authorize_redirect(redirect_uri)
 
