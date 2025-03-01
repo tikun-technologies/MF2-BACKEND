@@ -84,6 +84,7 @@ def login():
             return jsonify({'status': 'error', 'message': 'Invalid credentials'}), 401
         
         access_token = create_access_token(identity=email, expires_delta=datetime.timedelta(days=30))
+        user.pop("password")
         return jsonify({'status': 'success',"user":user, 'access_token': str(access_token)})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
