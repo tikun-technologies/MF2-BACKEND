@@ -230,6 +230,17 @@ def reset_password():
 
 # ####                  #####  user data extraction routes ######################################################
 
+
+@studyuserBp.route("/mf2/user/me", methods=['GET'])
+@jwt_required()
+def get_user_detail():
+    current_user = get_jwt_identity()
+    user=STUDY_USER_collection.find_one({"email":current_user},{"password":0})
+    return jsonify({'status': 'success', 'user': user})
+
+
+
+
 @studyuserBp.route("/mf2/user/studies", methods=['GET'])
 @jwt_required()
 def get_user_studies():
