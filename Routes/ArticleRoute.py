@@ -11,7 +11,6 @@ from functions import upload_to_azure
 articleBp = Blueprint('articleBp', __name__)
 
 @articleBp.route("/mf2/articles",methods=['GET', 'POST', 'OPTIONS'])
-@jwt_required()
 def get_all_articles():
     try:
         all_articles=[i for i in ARTICLE_collection.find({})]

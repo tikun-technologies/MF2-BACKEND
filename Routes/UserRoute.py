@@ -132,7 +132,7 @@ def google_callback():
         access_token = create_access_token(identity=email, expires_delta=datetime.timedelta(days=30))
         response = make_response(redirect("https://yourfrontend.com/dashboard"))  # ✅ No token in URL
         response.set_cookie(
-            "access_token", access_token,
+            "authToken", access_token,
             httponly=True, secure=True, samesite="Strict", max_age=30*24*60*60
         )
         return response
