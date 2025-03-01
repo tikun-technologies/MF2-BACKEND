@@ -1,10 +1,10 @@
 import uuid
 import jwt
 import datetime
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, make_response, redirect, request, jsonify
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token, decode_token, jwt_required, get_jwt_identity
-from DB.db import STUDY_USER_collection, STUDIES_collection
+from DB.db import STUDY_USER_collection, STUDIES_collection,ARTICLE_collection
 from extension import jwt,oauth,mail
 from flask_mail import Message
 def send_reset_email(email, token):
@@ -129,11 +129,26 @@ def google_callback():
 
         # ✅ Generate JWT Token
         access_token = create_access_token(identity=email, expires_delta=datetime.timedelta(days=30))
-        
-        return jsonify({'status': 'success', 'access_token': access_token, 'message': 'Google Login Successful'})
+        response = make_response(redirect("https://yourfrontend.com/dashboard"))  # ✅ No token in URL
+        response.set_cookie(
+            "access_token", access_token,
+            httponly=True, secure=True, samesite="Strict", max_age=30*24*60*60
+        )
+        return response
+        # return jsonify({'status': 'success', 'access_token': access_token, 'message': 'Google Login Successful'})
 
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
+
+
+
+
+
+
+
+
+
+
 
 
 @studyuserBp.route("/mf2/reset-password-request", methods=['POST'])
@@ -221,5 +236,15 @@ def get_user_studies():
         current_user = get_jwt_identity()
         studies = list(STUDIES_collection.find({"studyCreatedBy.user.email": current_user}))
         return jsonify({'status': 'success', 'studies': studies})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+    
+@studyuserBp.route("/mf2/user/articles", methods=['GET'])
+@jwt_required()
+def get_user_articles():
+    try:
+        current_user = get_jwt_identity()
+        studies = list(ARTICLE_collection.find({"author.email": current_user}))
+        return jsonify({'status': 'success', 'articles': studies})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400

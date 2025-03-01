@@ -39,7 +39,11 @@ def home():
 
 from Routes.StudyRoute import studyBp
 from Routes.UserRoute import studyuserBp
+from Routes.ArticleRoute import articleBp
+
+
 app.register_blueprint(studyBp)  
+app.register_blueprint(articleBp)  
 app.register_blueprint(studyuserBp)  
 
 
