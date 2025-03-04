@@ -293,9 +293,12 @@ def get_file_data_for_study(file_bytes):
                     output_json["Questions"].append(current_question)
                 elif isinstance(row[0], str) and current_question:
                     total=row[total_col] if total_col in df.columns else None
+                    if str(total)=="nan":
+                        total=None
+                    print(total)
                     option_data = {
                         "optiontext": row[1],
-                        "Total": total if total!="nan" else None,
+                        "Total": total,
                         "Mindsets": [],
                         "Gender Segments": {},
                         "Age Segments": {},
@@ -361,3 +364,5 @@ def get_file_data_for_study(file_bytes):
             "studyKeywords":study_info['study_keywords'],
             "studyData":output_data
             }
+
+
