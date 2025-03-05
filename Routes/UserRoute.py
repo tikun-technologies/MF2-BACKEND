@@ -1,14 +1,14 @@
 import uuid
 import jwt
 import datetime
-from flask import Blueprint, make_response, redirect, request, jsonify
+from flask import Blueprint, json, make_response, redirect, request, jsonify
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token, decode_token, jwt_required, get_jwt_identity
 from DB.db import STUDY_USER_collection, STUDIES_collection,ARTICLE_collection
 from extension import jwt,oauth,mail
 from flask_mail import Message
 def send_reset_email(email, token):
-    reset_url = f"https://tikunstudies.netlify.app/reset-password?token={token}"
+    reset_url = f"https://mindgenome.org/reset-password?token={token}"
     msg = Message("Password Reset Request",
                   sender="studies@tikuntech.com",
                   recipients=[email])
@@ -92,53 +92,78 @@ def login():
 # Google OAuth Login
 @studyuserBp.route("/mf2/login/google")
 def google_login():
-    print(request.host_url)
-    redirect_uri = "https://studiesapi.tikuntech.com/mf2/callback/google"
-    print(redirect_uri)
-    return oauth.google.authorize_redirect(redirect_uri)
+    frontend_origin = request.headers.get('Origin')  # Get frontend URL dynamically
+    if not frontend_origin:
+        return jsonify({"error": "No Origin header found"}), 400
 
-# Google OAuth Callback
+    redirect_uri = request.host_url + "mf2/callback/google"  # Dynamically set callback URL
+    response = oauth.google.authorize_redirect(redirect_uri)
+    
+    # Store frontend origin in a secure cookie
+    response.set_cookie("frontend_origin", frontend_origin, httponly=True, secure=True, samesite="Strict")
+    return response
+
 @studyuserBp.route("/mf2/callback/google")
 def google_callback():
     try:
-        # ✅ Exchange authorization code for an access token
         token = oauth.google.authorize_access_token()
-        print("Google Token:", token)  # Debugging
-
-        # ✅ Get user info using the access token
         user_info = oauth.google.get('https://openidconnect.googleapis.com/v1/userinfo').json()
-        print("User Info:", user_info)  # Debugging
 
         email = user_info.get('email')
-        first_name = user_info.get('given_name')  # ✅ Extract first name
+        first_name = user_info.get('given_name')
         last_name = user_info.get('family_name')
 
         if not email:
             return jsonify({'status': 'error', 'message': 'Failed to retrieve email from Google'}), 400
 
-        # ✅ Check if user exists, if not, create one
+        # Check if user exists, if not, create one
         user = STUDY_USER_collection.find_one({"email": email})
         if not user:
-            user_data={}
-            user_data["_id"]= str(uuid.uuid4())
-            user_data["auth_type"]="google"
-            user_data["email"]=email
-            user_data["firstName"]=first_name
-            user_data["lastName"]=last_name
-            user_data["companyName"]=""
+            user_data = {
+                "_id": str(uuid.uuid4()),
+                "auth_type": "google",
+                "email": email,
+                "firstName": first_name,
+                "lastName": last_name,
+                "companyName": ""
+            }
             STUDY_USER_collection.insert_one(user_data)
+        else:
+            user_data = {
+                "_id": user["_id"],
+                "auth_type": user["auth_type"],
+                "email": user["email"],
+                "firstName": user.get("firstName", ""),
+                "lastName": user.get("lastName", ""),
+                "companyName": user.get("companyName", "")
+            }
 
-        # ✅ Generate JWT Token
+        # Generate JWT access token
         access_token = create_access_token(identity=email, expires_delta=datetime.timedelta(days=30))
-        response = make_response(redirect("https://yourfrontend.com/dashboard"))  # ✅ No token in URL
+
+        # Retrieve frontend origin from cookie
+        frontend_origin = request.cookies.get("frontend_origin", "https://yourfrontend.com")
+        dashboard_url = f"{frontend_origin}/dashboard"
+
+        # Set response with cookies
+        response = make_response(redirect(dashboard_url))
+
+        # Store access token securely
         response.set_cookie(
             "authToken", access_token,
             httponly=True, secure=True, samesite="Strict", max_age=30*24*60*60
         )
+
+        # Store user info in cookie (JSON format, URL-safe)
+        response.set_cookie(
+            "user", json.dumps(user_data),
+            httponly=False, secure=True, samesite="Strict", max_age=30*24*60*60
+        )
+
         return response
-        # return jsonify({'status': 'success', 'access_token': access_token, 'message': 'Google Login Successful'})
 
     except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
         return jsonify({'status': 'error', 'message': str(e)}), 400
 
 
