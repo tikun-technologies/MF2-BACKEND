@@ -28,7 +28,7 @@ app.config['MAIL_DEFAULT_SENDER'] = 'studies@tikuntech.com'  # ✅ Set default s
 mail.init_app(app)
 
 CORS(app, resources={r"/*": {"origins": ["http://localhost:3000","*"],
-                             "methods": ["GET", "POST", "OPTIONS","DELETE"],
+                             "methods": ["GET","PUT", "POST", "OPTIONS","DELETE"],
                              "supports_credentials": True}})
 
 
