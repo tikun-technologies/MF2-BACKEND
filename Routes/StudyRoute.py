@@ -1,12 +1,11 @@
 import os
-# from turtle import pd
-import uuid
+import threading
 from flask import Blueprint, request
 from DB.db import STUDIES_collection,STUDY_USER_collection
 from flask import jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from functions import get_file_data_for_study
+from functions import get_file_data_for_study, get_ppt
 
 studyBp = Blueprint('studyBp', __name__)
 
@@ -24,7 +23,7 @@ def study_list():
 @studyBp.route("/mf2/add/study", methods=["GET","POST"])
 @jwt_required()
 def insert_study():
-    try:
+    # try:
         current_user = get_jwt_identity()  # ✅ Get user's email from JWT
         print(current_user)
         if 'file' not in request.files:
@@ -44,8 +43,13 @@ def insert_study():
         # ✅ Add the authenticated user's email to `studyCreatedBy`
         result["studyCreatedBy"] = {"user":STUDY_USER_collection.find_one({"email": current_user},{"password": 0})}
         # print(result)
+        auth_header = request.headers.get('Authorization', '')
+        user_token = auth_header.replace('Bearer ', '') if auth_header.startswith('Bearer ') else None
+
         # Insert the study into the database
         study = STUDIES_collection.insert_one(result)
+        ppt_thread = threading.Thread(target=get_ppt, args=(study.inserted_id, user_token))
+        ppt_thread.start()
 
         return jsonify({
             "status": "success",
@@ -53,8 +57,8 @@ def insert_study():
             "study_id": str(study.inserted_id)
         })
 
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
+    # except Exception as e:
+    #     return jsonify({"status": "error", "message": str(e)}), 400
     
     
 @studyBp.route("/mf2/study/<study_id>", methods=['GET'])
