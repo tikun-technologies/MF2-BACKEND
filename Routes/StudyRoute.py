@@ -1,5 +1,6 @@
 import os
-import threading
+# import threading
+from multiprocessing import Process
 from flask import Blueprint, request
 from DB.db import STUDIES_collection,STUDY_USER_collection
 from flask import jsonify
@@ -48,8 +49,10 @@ def insert_study():
 
         # Insert the study into the database
         study = STUDIES_collection.insert_one(result)
-        ppt_thread = threading.Thread(target=get_ppt, args=(study.inserted_id, user_token))
-        ppt_thread.start()
+        p = Process(target=get_ppt, args=(study.inserted_id, user_token))
+        # ppt_thread = threading.Thread(target=get_ppt, args=(study.inserted_id, user_token))
+        # ppt_thread.start()
+        p.start()
 
         return jsonify({
             "status": "success",
