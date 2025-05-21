@@ -7,6 +7,8 @@ from selenium.webdriver.common.by import By
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 import pandas as pd
+import tempfile
+import shutil
 from pptx.enum.shapes import MSO_SHAPE
 from pptx import Presentation
 from pptx.util import Inches, Pt
@@ -401,6 +403,25 @@ def get_ppt(study_id,token):
     # Initialize WebDriver
     driver = webdriver.Chrome(options=chrome_options)
 
+    def get_driver():
+        chrome_options = Options()
+
+        # Create a unique temp directory for each session
+        temp_profile_dir = tempfile.mkdtemp(prefix="chrome-profile-")
+
+        # Use it as Chrome's user data dir
+        chrome_options.add_argument(f"--user-data-dir={temp_profile_dir}")
+
+        # Optional: headless mode
+        chrome_options.add_argument("--headless=new")  # new headless mode (Chrome 109+)
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+
+        driver = webdriver.Chrome(options=chrome_options)
+
+        return driver, temp_profile_dir
+    
+    driver, temp_profile = get_driver()
 
 
     url = f"https://studiesapi.tikuntech.com/mf2/study/{study_id}"
@@ -949,5 +970,7 @@ def get_ppt(study_id,token):
     
     STUDIES_collection.find_one_and_update({"_id":study_id},  {"$set": {"hasPpt": True, "pptUrl":ppturl}})
     driver.quit()
+
+    shutil.rmtree(temp_profile, ignore_errors=True)  # Clean up
     # input("Press Enter to exit...")
 
