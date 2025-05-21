@@ -391,17 +391,17 @@ def generate_separated_mindset_insights(json_data):
 
 def get_ppt(study_id,token):
    
-    # Set Chrome options
-    chrome_options = Options()
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Run in headless mode
-    chrome_options.add_argument("--start-maximized")  # Start maximized
-    chrome_options.add_argument("--window-size=1920,1080")  # Set window size (optional)
-    # unique_user_data_dir = f"/tmp/chrome-profile-{uuid.uuid4()}"
-    # chrome_options.add_argument(f"--user-data-dir={unique_user_data_dir}")
+    # # Set Chrome options
+    # chrome_options = Options()
+    # chrome_options = Options()
+    # chrome_options.add_argument("--headless")  # Run in headless mode
+    # chrome_options.add_argument("--start-maximized")  # Start maximized
+    # chrome_options.add_argument("--window-size=1920,1080")  # Set window size (optional)
+    # # unique_user_data_dir = f"/tmp/chrome-profile-{uuid.uuid4()}"
+    # # chrome_options.add_argument(f"--user-data-dir={unique_user_data_dir}")
 
-    # Initialize WebDriver
-    driver = webdriver.Chrome(options=chrome_options)
+    # # Initialize WebDriver
+    # driver = webdriver.Chrome(options=chrome_options)
 
     def get_driver():
         chrome_options = Options()
