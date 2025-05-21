@@ -395,8 +395,8 @@ def get_ppt(study_id,token):
     chrome_options.add_argument("--headless")  # Run in headless mode
     chrome_options.add_argument("--start-maximized")  # Start maximized
     chrome_options.add_argument("--window-size=1920,1080")  # Set window size (optional)
-    unique_user_data_dir = f"/tmp/chrome-profile-{uuid.uuid4()}"
-    chrome_options.add_argument(f"--user-data-dir={unique_user_data_dir}")
+    # unique_user_data_dir = f"/tmp/chrome-profile-{uuid.uuid4()}"
+    # chrome_options.add_argument(f"--user-data-dir={unique_user_data_dir}")
 
     # Initialize WebDriver
     driver = webdriver.Chrome(options=chrome_options)
