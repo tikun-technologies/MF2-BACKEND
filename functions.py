@@ -445,8 +445,13 @@ def get_ppt(study_id,token):
 
 
 
-    # Step 1: Open the login page
-    driver.get("https://mindgenome.org")
+    # Step 1: Open the login page main
+    # driver.get("https://mindgenome.org")
+
+
+
+  # Step 1: Open the login page test server 
+    driver.get("https://tikunstudies-test.netlify.app")
     time.sleep(5)  # Wait for page to fully load
     USER_JSON_STRING = json.dumps(USER_JSON)
     # Step 2: Inject Bearer Token and User Data into localStorage
@@ -461,7 +466,12 @@ def get_ppt(study_id,token):
     print("🔍 Stored Token:", stored_token)
     print("🔍 Stored User Data:", stored_user)
 
-    driver.get(f"https://mindgenome.org/study/{study_id}")
+    # main server 
+    # driver.get(f"https://mindgenome.org/study/{study_id}")
+
+
+    # test server 
+    driver.get(f"https://tikunstudies-test.netlify.app/study/{study_id}")
     time.sleep(10)  # Allow the page to load
 
     # Keep browser open for testing
