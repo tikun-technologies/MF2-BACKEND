@@ -415,6 +415,7 @@ def get_ppt(study_id,token):
         # Optional: headless mode
         chrome_options.add_argument("--headless=new")  # new headless mode (Chrome 109+)
         chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--window-size=1920,1080")  # Set window size (optional)
         chrome_options.add_argument("--disable-dev-shm-usage")
 
         driver = webdriver.Chrome(options=chrome_options)
