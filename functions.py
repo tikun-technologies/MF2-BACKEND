@@ -210,6 +210,8 @@ def get_file_data_for_study(file_bytes):
         for col in df.columns[3:]:
             base_values[col] = df.iloc[0][col] if not pd.isna(df.iloc[0][col]) else None
         return base_values
+    
+    
     output_data = {}
     for sheet in xls.sheet_names[5:]:
         try:
@@ -218,6 +220,7 @@ def get_file_data_for_study(file_bytes):
                 "Base Values": extract_base_values(df),
                 "Data": process_sheet(df)
             }
+            
         except Exception as error :
             # print(error)
             output_data[sheet]={
@@ -228,8 +231,10 @@ def get_file_data_for_study(file_bytes):
 
 
 
-
-
+    flat_output_data=flatten_all_segments(output_data)
+    ffff=open("flat_output.json","w")
+    ffff.write(json.dumps(flat_output_data, indent=4))
+    ffff.close()
     return {"_id":str(uuid.uuid4()),
             "studyTitle":study_info['study_title'],
             "hasPpt":False,
@@ -238,9 +243,9 @@ def get_file_data_for_study(file_bytes):
             "studyStatus":study_info['study_status'],
             "studyRespondents":study_info['study_respondents'],
             "studyKeywords":study_info['study_keywords'],
-            "studyData":output_data,
+            "studyData":flat_output_data,
             "studySummarizationData":extract_summarizer_data(file_bytes),
-            "studySegmentData": generate_segment_percentages(file_bytes)
+            "mindsetsSegmentationsData": generate_segment_percentages(file_bytes)
             }
 
 
@@ -388,8 +393,80 @@ def generate_separated_mindset_insights(json_data):
     
     return insights
 
+def flatten_all_segments(raw_data):
+    structured_output = {}
 
+    for segment_key, segment_data in raw_data.items():
+        print(segment_key)
+        base_values = segment_data.get("Base Values", {})
+        questions = segment_data.get("Data", {}).get("Questions", [])
 
+        if not questions:
+            continue
+
+        # Check if this is an "Overall" segment (no inner segments)
+        is_overall_segment = (
+            "Overall" in segment_key or
+            (not base_values and all(
+                not opt.get("Age Segments") and
+                not opt.get("Gender Segments") and
+                not opt.get("Mindsets") and
+                not opt.get("Prelim-Answer Segments")
+                for q in questions for opt in q.get("options", [])
+            ))
+        )
+
+        flattened = []
+
+        if is_overall_segment:
+            # Simple flattening with only question, option, total
+            for question in questions:
+                q_text = question.get("Question", "")
+                for option in question.get("options", []):
+                    row = {
+                        "Question": q_text,
+                        "Option": option.get("optiontext", ""),
+                        "Overall": option.get("Total", 0)
+                    }
+                    flattened.append(row)
+
+        else:
+            # Clean valid base segments for column naming
+            valid_segments = [k for k in base_values if k and not str(k).startswith("Unnamed")]
+
+            for question in questions:
+                q_text = question.get("Question", "")
+                for option in question.get("options", []):
+                    row = {
+                        "Question": q_text,
+                        "Option": option.get("optiontext", ""),
+                        "Overall": option.get("Total", 0)
+                    }
+
+                    # Loop through all potential segment types
+                    for segment_type_key, segment_value in option.items():
+                        if isinstance(segment_value, dict):
+                            for seg, val in segment_value.items():
+                                col = f"{seg} ({int(base_values.get(seg, 0))})"
+                                row[col] = val
+                        elif isinstance(segment_value, list):
+                            for item in segment_value:
+                                if isinstance(item, dict):
+                                    for seg, val in item.items():
+                                        col = f"{seg} ({int(base_values.get(seg, 0))})"
+                                        row[col] = val
+
+                    # Fill in missing segments with 0
+                    for seg in valid_segments:
+                        col = f"{seg} ({int(base_values[seg])})"
+                        if col not in row:
+                            row[col] = 0
+
+                    flattened.append(row)
+
+        structured_output[segment_key] = flattened
+
+    return structured_output
 
 def get_ppt(study_id,token):
    
@@ -1073,3 +1150,14 @@ def generate_segment_percentages(file_bytes: bytes):
             result.append(row)
 
     return result
+
+
+
+
+
+# Load file and read bytes
+# with open("04032025.Clean_.xlsx", "rb") as f:
+#     file_bytes = f.read()
+
+# # Call the function
+# results = get_file_data_for_study(file_bytes)
