@@ -20,7 +20,6 @@ def study_list():
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
-
 @studyBp.route("/mf2/add/study", methods=["GET","POST"])
 @jwt_required()
 def insert_study():
@@ -44,6 +43,7 @@ def insert_study():
         # ✅ Add the authenticated user's email to `studyCreatedBy`
         result["studyCreatedBy"] = {"user":STUDY_USER_collection.find_one({"email": current_user},{"password": 0})}
         # print(result)
+        result["isPublic"] = False
         auth_header = request.headers.get('Authorization', '')
         user_token = auth_header.replace('Bearer ', '') if auth_header.startswith('Bearer ') else None
 
@@ -65,15 +65,25 @@ def insert_study():
     
     
 @studyBp.route("/mf2/study/<study_id>", methods=['GET'])
-@jwt_required()
+@jwt_required(optional=True)  # allow public access
 def get_study_by_id(study_id):
     try:
         study = STUDIES_collection.find_one({"_id": study_id})
         if not study:
             return jsonify({'status': 'error', 'message': 'Study not found'}), 404
+
+        # if not public, restrict access
+        if not study.get("isPublic", False):
+            current_user = get_jwt_identity()
+            creator_email = study.get("studyCreatedBy", {}).get("user", {}).get("email")
+
+            if current_user != creator_email:
+                return jsonify({'status': 'error', 'message': 'Unauthorized to view this private study'}), 403
+
         return jsonify({'status': 'success', 'study': study})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
+
 
 # Delete Study
 @studyBp.route("/mf2/study/<study_id>", methods=['DELETE'])

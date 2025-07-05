@@ -111,9 +111,6 @@ def get_file_data_for_study(file_bytes):
     # Load the Excel file from memory
     xls = pd.ExcelFile(BytesIO(file_bytes))
 
-    
-
-
 
     # Function to process a single sheet
     def process_sheet_for_info(df):
@@ -229,6 +226,10 @@ def get_file_data_for_study(file_bytes):
             
         # print(output_data)
 
+
+
+
+
     return {"_id":str(uuid.uuid4()),
             "studyTitle":study_info['study_title'],
             "hasPpt":False,
@@ -238,7 +239,8 @@ def get_file_data_for_study(file_bytes):
             "studyRespondents":study_info['study_respondents'],
             "studyKeywords":study_info['study_keywords'],
             "studyData":output_data,
-            "studySummarizationData":extract_summarizer_data(file_bytes)
+            "studySummarizationData":extract_summarizer_data(file_bytes),
+            "studySegmentData": generate_segment_percentages(file_bytes)
             }
 
 
@@ -985,3 +987,89 @@ def get_ppt(study_id,token):
     shutil.rmtree(temp_profile, ignore_errors=True)  # Clean up
     # input("Press Enter to exit...")
 
+
+def generate_segment_percentages(file_bytes: bytes):
+    # === Load Excel file from bytes ===
+    workbook = pd.ExcelFile(BytesIO(file_bytes))
+    raw_df = workbook.parse("RawData")
+    info_df = workbook.parse("Information Block", header=None)
+
+    # === STEP 1: Keep first row per Panelist ===
+    deduped_df = raw_df.drop_duplicates(subset="Panelist", keep="first")
+
+    # === STEP 2: Map Gender & AgeGroup ===
+    gender_map = {1: "Male", 2: "Female"}
+    age_map = {
+        1: "13-17", 2: "18-24", 3: "25-34", 4: "35-44",
+        5: "45-54", 6: "55-64", 7: "65+"
+    }
+
+    deduped_df["Gender"] = deduped_df["Gender"].map(gender_map)
+    deduped_df["AgeGroup"] = deduped_df["AgeGroup"].map(age_map)
+
+    # === STEP 3: Extract segments from Information Block ===
+    segments = []
+    q_index = 1
+    i = 0
+
+    while i < len(info_df):
+        line = str(info_df.iloc[i, 0]).strip()
+        if line.startswith("Preliminary question"):
+            question = info_df.iloc[i, 1]
+            answers_line = str(info_df.iloc[i + 1, 1])
+            attr_map = {}
+
+            for ans in answers_line.split():
+                if "=" in ans:
+                    code, label = ans.split("=")
+                    attr_map[int(code)] = label.strip()
+
+            segments.append({
+                "segment": question,
+                "column": f"Quest{q_index}",
+                "attrMap": attr_map
+            })
+            q_index += 1
+            i += 2
+        else:
+            i += 1
+
+    # === STEP 4: Add fixed segments (Gender, AgeGroup) ===
+    segments.insert(0, {
+        "segment": "AgeGroup",
+        "column": "AgeGroup",
+        "attrMap": {v: v for v in age_map.values()}
+    })
+    segments.insert(0, {
+        "segment": "Gender",
+        "column": "Gender",
+        "attrMap": {"Male": "Male", "Female": "Female"}
+    })
+
+    # === STEP 5: Calculate mindset percentages ===
+    total = len(deduped_df)
+    mindset_counts = deduped_df["THREE MS"].value_counts().to_dict()
+
+    result = []
+
+    for seg in segments:
+        segment = seg["segment"]
+        column = seg["column"]
+        attr_map = seg["attrMap"]
+
+        for code, label in attr_map.items():
+            matching = deduped_df[deduped_df[column].astype(str) == str(code)]
+            row = {
+                "Segment": segment,
+                "Attribute": label,
+                "%TotalRespondents": f"{round(len(matching) / total * 100)}%"
+            }
+
+            for m in range(1, 4):
+                mind_match = matching[matching["THREE MS"] == m]
+                ms_total = mindset_counts.get(m, 1)  # avoid div by 0
+                row[f"%Mindset{m}"] = f"{round(len(mind_match) / ms_total * 100)}%"
+
+            result.append(row)
+
+    return result

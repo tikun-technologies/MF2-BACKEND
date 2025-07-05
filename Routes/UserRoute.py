@@ -21,10 +21,6 @@ If you did not request this, ignore this email.
 
 
 
-
-
-
-
 bcrypt = Bcrypt()
 
 studyuserBp = Blueprint('studyuserBp', __name__)
@@ -168,15 +164,6 @@ def google_callback():
 
 
 
-
-
-
-
-
-
-
-
-
 @studyuserBp.route("/mf2/reset-password-request", methods=['POST'])
 def reset_password_request():
     try:
@@ -233,26 +220,6 @@ def reset_password():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # ####                  #####  user data extraction routes ######################################################
 
 
@@ -264,14 +231,12 @@ def get_user_detail():
     return jsonify({'status': 'success', 'user': user})
 
 
-
-
 @studyuserBp.route("/mf2/user/studies", methods=['GET'])
 @jwt_required()
 def get_user_studies():
     try:
         current_user = get_jwt_identity()
-        studies = list(STUDIES_collection.find({"studyCreatedBy.user.email": current_user}))
+        studies = list(STUDIES_collection.find({"studyCreatedBy.user.email": current_user},{"studyData": 0, "studySummarizationData":0}))
         return jsonify({'status': 'success', 'studies': studies})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
