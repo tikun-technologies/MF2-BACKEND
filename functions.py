@@ -393,18 +393,18 @@ def generate_separated_mindset_insights(json_data):
     
     return insights
 
+from collections import OrderedDict
+
 def flatten_all_segments(raw_data):
     structured_output = {}
 
     for segment_key, segment_data in raw_data.items():
-        print(segment_key)
         base_values = segment_data.get("Base Values", {})
         questions = segment_data.get("Data", {}).get("Questions", [])
 
         if not questions:
             continue
 
-        # Check if this is an "Overall" segment (no inner segments)
         is_overall_segment = (
             "Overall" in segment_key or
             (not base_values and all(
@@ -419,48 +419,45 @@ def flatten_all_segments(raw_data):
         flattened = []
 
         if is_overall_segment:
-            # Simple flattening with only question, option, total
             for question in questions:
                 q_text = question.get("Question", "")
                 for option in question.get("options", []):
-                    row = {
-                        "Question": q_text,
-                        "Option": option.get("optiontext", ""),
-                        "Overall": option.get("Total", 0)
-                    }
+                    row = OrderedDict()
+                    row["Question"] = q_text
+                    row["Option"] = option.get("optiontext", "")
+                    row["Overall"] = option.get("Total", 0)
                     flattened.append(row)
 
         else:
-            # Clean valid base segments for column naming
             valid_segments = [k for k in base_values if k and not str(k).startswith("Unnamed")]
 
             for question in questions:
                 q_text = question.get("Question", "")
-                for option in question.get("options", []):
-                    row = {
-                        "Question": q_text,
-                        "Option": option.get("optiontext", ""),
-                        "Overall": option.get("Total", 0)
-                    }
+                segment_scores = {}
 
-                    # Loop through all potential segment types
+                for option in question.get("options", []):
+                    row = OrderedDict()
+                    row["Question"] = q_text
+                    row["Option"] = option.get("optiontext", "")
+                    row["Overall"] = option.get("Total", 0)
+
+                    # Gather all segment values
                     for segment_type_key, segment_value in option.items():
                         if isinstance(segment_value, dict):
                             for seg, val in segment_value.items():
-                                col = f"{seg} ({int(base_values.get(seg, 0))})"
-                                row[col] = val
+                                key = f"{seg} ({int(base_values.get(seg, 0))})"
+                                segment_scores[key] = val
                         elif isinstance(segment_value, list):
                             for item in segment_value:
                                 if isinstance(item, dict):
                                     for seg, val in item.items():
-                                        col = f"{seg} ({int(base_values.get(seg, 0))})"
-                                        row[col] = val
+                                        key = f"{seg} ({int(base_values.get(seg, 0))})"
+                                        segment_scores[key] = val
 
-                    # Fill in missing segments with 0
+                    # Add segment scores in order
                     for seg in valid_segments:
                         col = f"{seg} ({int(base_values[seg])})"
-                        if col not in row:
-                            row[col] = 0
+                        row[col] = segment_scores.get(col, 0)
 
                     flattened.append(row)
 
