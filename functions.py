@@ -1275,9 +1275,9 @@ def generate_segment_percentages(file_bytes: bytes):
 
 
 
-# # Load file and read bytes
-with open("04032025.Clean_.xlsx", "rb") as f:
-    file_bytes = f.read()
+# # # Load file and read bytes
+# with open("04032025.Clean_.xlsx", "rb") as f:
+#     file_bytes = f.read()
 
-# Call the function
-results = get_file_data_for_study(file_bytes)
+# # Call the function
+# results = get_file_data_for_study(file_bytes)
