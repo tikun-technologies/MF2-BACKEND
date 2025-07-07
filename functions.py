@@ -393,18 +393,92 @@ def generate_separated_mindset_insights(json_data):
     
     return insights
 
+# def flatten_all_segments(raw_data):
+#     structured_output = {}
+
+#     for segment_key, segment_data in raw_data.items():
+#         print(segment_key)
+#         base_values = segment_data.get("Base Values", {})
+#         questions = segment_data.get("Data", {}).get("Questions", [])
+
+#         if not questions:
+#             continue
+
+#         # Check if this is an "Overall" segment (no inner segments)
+#         is_overall_segment = (
+#             "Overall" in segment_key or
+#             (not base_values and all(
+#                 not opt.get("Age Segments") and
+#                 not opt.get("Gender Segments") and
+#                 not opt.get("Mindsets") and
+#                 not opt.get("Prelim-Answer Segments")
+#                 for q in questions for opt in q.get("options", [])
+#             ))
+#         )
+
+#         flattened = []
+
+#         if is_overall_segment:
+#             # Simple flattening with only question, option, total
+#             for question in questions:
+#                 q_text = question.get("Question", "")
+#                 for option in question.get("options", []):
+#                     row = {
+#                         "Question": q_text,
+#                         "Option": option.get("optiontext", ""),
+#                         "Overall": option.get("Total", 0)
+#                     }
+#                     flattened.append(row)
+
+#         else:
+#             # Clean valid base segments for column naming
+#             valid_segments = [k for k in base_values if k and not str(k).startswith("Unnamed")]
+
+#             for question in questions:
+#                 q_text = question.get("Question", "")
+#                 for option in question.get("options", []):
+#                     row = {
+#                         "Question": q_text,
+#                         "Option": option.get("optiontext", ""),
+#                         "Overall": option.get("Total", 0)
+#                     }
+
+#                     # Loop through all potential segment types
+#                     for segment_type_key, segment_value in option.items():
+#                         if isinstance(segment_value, dict):
+#                             for seg, val in segment_value.items():
+#                                 col = f"{seg} ({int(base_values.get(seg, 0))})"
+#                                 row[col] = val
+#                         elif isinstance(segment_value, list):
+#                             for item in segment_value:
+#                                 if isinstance(item, dict):
+#                                     for seg, val in item.items():
+#                                         col = f"{seg} ({int(base_values.get(seg, 0))})"
+#                                         row[col] = val
+
+#                     # Fill in missing segments with 0
+#                     for seg in valid_segments:
+#                         col = f"{seg} ({int(base_values[seg])})"
+#                         if col not in row:
+#                             row[col] = 0
+
+#                     flattened.append(row)
+
+#         structured_output[segment_key] = flattened
+
+#     return structured_output
+
 def flatten_all_segments(raw_data):
     structured_output = {}
 
     for segment_key, segment_data in raw_data.items():
-        print(segment_key)
         base_values = segment_data.get("Base Values", {})
         questions = segment_data.get("Data", {}).get("Questions", [])
 
         if not questions:
             continue
 
-        # Check if this is an "Overall" segment (no inner segments)
+        # Check if this is an "Overall" segment
         is_overall_segment = (
             "Overall" in segment_key or
             (not base_values and all(
@@ -415,8 +489,12 @@ def flatten_all_segments(raw_data):
                 for q in questions for opt in q.get("options", [])
             ))
         )
+        # Check if this is a Mindsets segment that needs splitting
+        is_mindsets_segment = "Mindsets" in segment_key and not is_overall_segment
 
         flattened = []
+        flattened_2_mindsets = []
+        flattened_3_mindsets = []
 
         if is_overall_segment:
             # Simple flattening with only question, option, total
@@ -442,6 +520,18 @@ def flatten_all_segments(raw_data):
                         "Option": option.get("optiontext", ""),
                         "Overall": option.get("Total", 0)
                     }
+                    
+                    row_2_mindsets = {
+                        "Question": q_text,
+                        "Option": option.get("optiontext", ""),
+                        "Overall": option.get("Total", 0)
+                    }
+                    
+                    row_3_mindsets = {
+                        "Question": q_text,
+                        "Option": option.get("optiontext", ""),
+                        "Overall": option.get("Total", 0)
+                    }
 
                     # Loop through all potential segment types
                     for segment_type_key, segment_value in option.items():
@@ -449,24 +539,54 @@ def flatten_all_segments(raw_data):
                             for seg, val in segment_value.items():
                                 col = f"{seg} ({int(base_values.get(seg, 0))})"
                                 row[col] = val
+                                # Split mindsets into 2 and 3 groups
+                                if is_mindsets_segment:
+                                    if "1 of 2" in seg or "2 of 2" in seg:
+                                        row_2_mindsets[col] = val
+                                    elif "1 of 3" in seg or "2 of 3" in seg or "3 of 3" in seg:
+                                        row_3_mindsets[col] = val
                         elif isinstance(segment_value, list):
                             for item in segment_value:
                                 if isinstance(item, dict):
                                     for seg, val in item.items():
                                         col = f"{seg} ({int(base_values.get(seg, 0))})"
                                         row[col] = val
+                                        # Split mindsets into 2 and 3 groups
+                                        if is_mindsets_segment:
+                                            if "1 of 2" in seg or "2 of 2" in seg:
+                                                row_2_mindsets[col] = val
+                                            elif "1 of 3" in seg or "2 of 3" in seg or "3 of 3" in seg:
+                                                row_3_mindsets[col] = val
 
                     # Fill in missing segments with 0
                     for seg in valid_segments:
                         col = f"{seg} ({int(base_values[seg])})"
                         if col not in row:
                             row[col] = 0
+                        if is_mindsets_segment:
+                            if "1 of 2" in seg or "2 of 2" in seg:
+                                if col not in row_2_mindsets:
+                                    row_2_mindsets[col] = 0
+                            elif "1 of 3" in seg or "2 of 3" in seg or "3 of 3" in seg:
+                                if col not in row_3_mindsets:
+                                    row_3_mindsets[col] = 0
 
                     flattened.append(row)
+                    if is_mindsets_segment:
+                        flattened_2_mindsets.append(row_2_mindsets)
+                        flattened_3_mindsets.append(row_3_mindsets)
 
-        structured_output[segment_key] = flattened
+        if is_mindsets_segment:
+            # Add both versions to the output
+            structured_output[f"{segment_key}_2"] = flattened_2_mindsets
+            structured_output[f"{segment_key}_3"] = flattened_3_mindsets
+            # Also keep the original combined version
+            structured_output[segment_key] = flattened
+        else:
+            structured_output[segment_key] = flattened
 
     return structured_output
+
 
 def get_ppt(study_id,token):
    
@@ -1155,9 +1275,9 @@ def generate_segment_percentages(file_bytes: bytes):
 
 
 
-# Load file and read bytes
-# with open("04032025.Clean_.xlsx", "rb") as f:
-#     file_bytes = f.read()
+# # Load file and read bytes
+with open("04032025.Clean_.xlsx", "rb") as f:
+    file_bytes = f.read()
 
-# # Call the function
-# results = get_file_data_for_study(file_bytes)
+# Call the function
+results = get_file_data_for_study(file_bytes)
