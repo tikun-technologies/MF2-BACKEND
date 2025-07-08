@@ -241,6 +241,18 @@ def get_user_studies():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
     
+
+@studyuserBp.route("/mf2/user/studies/all_data", methods=['GET'])
+@jwt_required()
+def get_user_studies():
+    try:
+        current_user = get_jwt_identity()
+        studies = list(STUDIES_collection.find({"studyCreatedBy.user.email": current_user}))
+        return jsonify({'status': 'success', 'studies': studies})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+    
+
 @studyuserBp.route("/mf2/user/articles", methods=['GET'])
 @jwt_required()
 def get_user_articles():

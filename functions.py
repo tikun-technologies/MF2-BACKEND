@@ -243,7 +243,8 @@ def get_file_data_for_study(file_bytes):
             "studyStatus":study_info['study_status'],
             "studyRespondents":study_info['study_respondents'],
             "studyKeywords":study_info['study_keywords'],
-            "studyData":flat_output_data,
+            "studyData":output_data,
+            "studyData_flat":flat_output_data,
             "studySummarizationData":extract_summarizer_data(file_bytes),
             "mindsetsSegmentationsData": generate_segment_percentages(file_bytes)
             }
