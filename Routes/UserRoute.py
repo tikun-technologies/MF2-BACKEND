@@ -244,7 +244,7 @@ def get_user_studies():
 
 @studyuserBp.route("/mf2/user/studies/all_data", methods=['GET'])
 @jwt_required()
-def get_user_studies():
+def get_user_studies_all_data():
     try:
         current_user = get_jwt_identity()
         studies = list(STUDIES_collection.find({"studyCreatedBy.user.email": current_user}))
