@@ -221,6 +221,7 @@ def get_file_data_for_study(file_bytes):
                 "Data": process_sheet(df)
             }
             
+            
         except Exception as error :
             # print(error)
             output_data[sheet]={
