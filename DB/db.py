@@ -7,3 +7,6 @@ db = client['MF2']
 STUDY_USER_collection = db['USERS']
 STUDIES_collection = db['STUDIES']
 ARTICLE_collection = db['ARTICLE']
+
+
+bimileap_db=db["innovation_engine"]

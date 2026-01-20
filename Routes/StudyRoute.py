@@ -96,3 +96,26 @@ def delete_study(study_id):
         return jsonify({'status': 'success', 'message': 'Study deleted successfully'})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
+    
+
+@studyBp.route("/bimileap/study/add", methods=['POST'])
+def add_bimileap_study_to_mindgenomic():
+    try:
+        data = request.json
+        if not data or 'study' not in data:
+            return jsonify({"status": "error", "message": "Invalid input"}), 400
+        
+        
+       
+        
+        # Insert the study into the database
+        result = STUDIES_collection.insert_one(study)
+        
+        return jsonify({
+            "status": "success",
+            "message": "Study added successfully",
+            "study_id": str(result.inserted_id)
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
